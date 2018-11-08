@@ -1,4 +1,4 @@
-use crate::error::Error;
+use error::Error;
 use std::ffi::OsStr;
 use std::path::Path;
 use std::process;

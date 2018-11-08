@@ -1,7 +1,12 @@
 //! Calculate code statistics for the linux kernel.
 #![deny(missing_docs)]
 
-use kernelstats::error::Error;
+extern crate serde_derive;
+
+mod error;
+mod git;
+
+
 use serde_derive::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::env;
@@ -12,7 +17,7 @@ use std::process;
 use std::str;
 
 /// Call tokei on the given path and get statistics.
-fn tokei(dir: &Path) -> Result<HashMap<String, LanguageStats>, Error> {
+fn tokei(dir: &Path) -> Result<HashMap<String, LanguageStats>, error::Error> {
     let out = process::Command::new("tokei")
         .current_dir(dir)
         .args(&["-o", "json"])
@@ -72,13 +77,13 @@ impl<'a> Output<'a> {
     }
 }
 
-fn main() -> Result<(), Error> {
+fn main() -> Result<(), error::Error> {
     use std::io::Write;
 
     let mut a = env::args();
     a.next();
 
-    let kernel_dir = PathBuf::from(a.next().ok_or_else(|| Error::MissingArgument)?);
+    let kernel_dir = PathBuf::from(a.next().ok_or_else(|| error::Error::MissingArgument)?);
     let out_file = PathBuf::from(a.next().unwrap_or_else(|| String::from("kernelstats.json")));
 
     if !kernel_dir.is_dir() {
@@ -92,7 +97,7 @@ fn main() -> Result<(), Error> {
             e
         )
     })?;
-    let kernel_git = kernelstats::git::Git::new(&kernel_dir);
+    let kernel_git = git::Git::new(&kernel_dir);
 
     for tag in kernel_git.tags()? {
         match tag.as_str() {
